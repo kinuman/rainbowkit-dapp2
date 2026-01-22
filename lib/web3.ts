@@ -33,10 +33,15 @@ export async function getJPYCBalance(address: string) {
   }
 
   try {
+    if (!ethers.isAddress(address)) {
+      console.warn('Invalid address format:', address);
+      return '0';
+    }
+
     let contractAddress = process.env.NEXT_PUBLIC_JPYC_CONTRACT || DEFAULT_JPYC_CONTRACT;
     
-    // アドレスが不正な場合はデフォルトを使用
     if (!ethers.isAddress(contractAddress)) {
+      console.warn('Invalid contract address, using default');
       contractAddress = DEFAULT_JPYC_CONTRACT;
     }
 
@@ -48,7 +53,7 @@ export async function getJPYCBalance(address: string) {
     
     return ethers.formatUnits(balance, decimals);
   } catch (error: any) {
-    console.error('Failed to get JPYC balance:', error);
+    console.error('Failed to get JPYC balance:', error.message || error);
     return '0';
   }
 }
@@ -59,9 +64,19 @@ export async function transferJPYC(toAddress: string, amount: string) {
   }
 
   try {
+    // Validate inputs
+    if (!toAddress || !amount) {
+      throw new Error('宛先アドレスと金額を指定してください');
+    }
+
+    if (parseFloat(amount) <= 0) {
+      throw new Error('金額は0より大きい値を指定してください');
+    }
+
     let contractAddress = process.env.NEXT_PUBLIC_JPYC_CONTRACT || DEFAULT_JPYC_CONTRACT;
     
     if (!ethers.isAddress(contractAddress)) {
+      console.warn('Invalid contract address, using default');
       contractAddress = DEFAULT_JPYC_CONTRACT;
     }
 
@@ -72,7 +87,6 @@ export async function transferJPYC(toAddress: string, amount: string) {
     const decimals = await contract.decimals();
     const amountInWei = ethers.parseUnits(amount, decimals);
     
-    // アドレスの正規化（チェックサムエラー対策）
     const normalizedToAddress = ethers.getAddress(toAddress);
     const tx = await contract.transfer(normalizedToAddress, amountInWei);
     await tx.wait();

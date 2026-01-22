@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAppStore, useWalletStore } from '../lib/store';
 import { MapPin, Clock, PlusCircle, Sun, Moon, CheckCircle2, MessageSquare } from 'lucide-react';
 import { useTheme } from 'next-themes';
@@ -12,8 +12,21 @@ export default function Sidebar() {
   const [newReward, setNewReward] = useState('');
   const [newDescription, setNewDescription] = useState('');
 
+  // Memoize sorted tasks to prevent unnecessary re-renders
+  const sortedTasks = useMemo(() => {
+    return [...tasks].sort((a, b) => b.timestamp - a.timestamp);
+  }, [tasks]);
+
   const handleAddTask = () => {
-    if (!newTitle || !newReward) return;
+    if (!newTitle.trim() || !newReward) {
+      console.warn('Title and reward are required');
+      return;
+    }
+
+    if (parseFloat(newReward) <= 0) {
+      console.warn('Reward must be greater than 0');
+      return;
+    }
 
     const newTask = {
       id: Math.random().toString(36).substr(2, 9),
@@ -95,17 +108,17 @@ export default function Sidebar() {
             近くの投稿
           </h3>
           <span className="text-sm font-black text-green-600 bg-green-50 dark:bg-green-900/30 px-3 py-1 rounded-full">
-            {tasks.length}件
+            {sortedTasks.length}件
           </span>
         </div>
 
         <div className="space-y-4">
-          {tasks.length === 0 && (
+          {sortedTasks.length === 0 && (
             <div className="text-center py-10 text-gray-400 font-bold text-sm">
               近くに投稿はありません
             </div>
           )}
-          {tasks.map((task) => (
+          {sortedTasks.map((task) => (
             <div key={task.id} className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all">
               <div className="flex justify-between items-start mb-2">
                 <h4 className="font-black text-gray-900 dark:text-white text-lg">

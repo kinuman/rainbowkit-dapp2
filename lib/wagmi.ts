@@ -3,7 +3,12 @@ import { polygon } from 'wagmi/chains';
 
 export const config = getDefaultConfig({
   appName: 'HyperLocal',
-  projectId: 'YOUR_PROJECT_ID', // In a real app, this would be an env var
+  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'YOUR_PROJECT_ID',
   chains: [polygon],
   ssr: true,
 });
+
+// Validate projectId is set
+if (process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID === 'YOUR_PROJECT_ID' || !process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID) {
+  console.warn('⚠️ Warning: NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID is not configured. Please set it in .env.local');
+}

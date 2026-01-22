@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useAppStore } from '../lib/store';
@@ -11,8 +11,11 @@ export default function MapPanel() {
   const { theme } = useTheme();
   const markers = useRef<maplibregl.Marker[]>([]);
 
-  const handleGetCurrentLocation = () => {
-    if (!navigator.geolocation) return;
+  const handleGetCurrentLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      console.warn('Geolocation is not supported');
+      return;
+    }
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
@@ -21,11 +24,10 @@ export default function MapPanel() {
       },
       (err) => {
         console.warn('Geolocation error:', err.message);
-        // Optionally toast error here
       },
       { enableHighAccuracy: true }
     );
-  };
+  }, [setCurrentLocation]);
 
   useEffect(() => {
     if (map.current || !mapContainer.current) return;
@@ -79,7 +81,7 @@ export default function MapPanel() {
     } catch (error) {
       console.error('Map initialization error:', error);
     }
-  }, [setCurrentLocation]); // Removed theme from dependency as we handle it via CSS
+  }, []);
 
   useEffect(() => {
     if (!map.current) return;
@@ -118,7 +120,7 @@ export default function MapPanel() {
 
       markers.current.push(marker);
     });
-  }, [tasks, theme]);
+  }, [tasks, theme, setCurrentLocation]);
 
   return (
     <div className="relative w-full h-full bg-gray-100 dark:bg-gray-950">
